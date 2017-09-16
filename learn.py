@@ -16,7 +16,7 @@ from sklearn import preprocessing
 from sklearn.cross_validation import train_test_split
 from sklearn import metrics
 from sklearn.model_selection import GridSearchCV
-
+import matplotlib.pyplot as plt
 
 df = pickle.load(open('dataarray.p','rb'))
 #%%
@@ -163,3 +163,22 @@ ET.fit(X_train, y_train, param_grids, lasso_grid, tune=False)
 ET.predict(X_test)
 ET.evaluatel1(y_test)
 ET.evaluatel2(y_test)
+
+#%%
+cols = df.drop(['rainfall','datestamp','SID'], axis = 1).columns
+features = [sorted(zip(cols, i.feature_importances_), key = lambda x: x[1], reverse=False) for i in ET.tunedModels[0:2]]
+impt = [[feature [1] for feature in l] for l in features]
+col = [[feature [0] for feature in l] for l in features]
+
+plt.subplots(figsize=(12, 8))
+sns.barplot(x=impt[0], y=col[0], orient = 'h')
+
+plt.subplots(figsize=(12, 8))
+sns.barplot(x=impt[1], y=col[1], orient = 'h')
+
+features = sorted(zip(cols, ET.tunedModels[3].feature_importances_), key = lambda x: x[1], reverse=False)
+impt = [feature [1] for feature in features]
+col = [feature [0] for feature in features]
+
+plt.subplots(figsize=(12, 8))
+sns.barplot(x=impt, y=col, orient = 'h')
