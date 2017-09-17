@@ -105,7 +105,7 @@ class EnsembleTrainer:
         return np.apply_along_axis(metrics.mean_squared_error, 0, self.l1Output, Y_test)
 #%%
 X = df.drop(['rainfall','datestamp','SID'], axis = 1)
-X = preprocessing.scale(X.apply(stripNA, axis = 0, cts=True).values)
+X = X.apply(stripNA, axis = 0, cts=True).values
 
 Y = df.sum(axis=1).values
 Y = df['rainfall'].values
@@ -182,3 +182,32 @@ col = [feature [0] for feature in features]
 
 plt.subplots(figsize=(12, 8))
 sns.barplot(x=impt, y=col, orient = 'h')
+
+#%%
+def rainforecast(api_key, trainer, station=None):
+    resourcelist = ['https://api.data.gov.sg/v1/environment/wind-speed',
+               'https://api.data.gov.sg/v1/environment/air-temperature',
+               'https://api.data.gov.sg/v1/environment/pm25',
+               'https://api.data.gov.sg/v1/environment/psi',
+               'https://api.data.gov.sg/v1/environment/rainfall',
+               'https://api.data.gov.sg/v1/environment/relative-humidity',
+               'https://api.data.gov.sg/v1/environment/wind-direction'
+               ]
+    print('Collecting Data...')
+    data = toDataFrame(calldata(None, api_key, resourcelist))
+    stations = data.index
+    print('Available stations are:')
+    print(stations)
+    data.drop(['rainfall','datestamp'], axis = 1, inplace=True)
+    data['psi_three_hourly'] = 0
+#    X = df.drop(['rainfall','datestamp','SID'], axis = 1)    
+    if station:
+        dataX = data.apply(stripNA, axis = 0, cts=True).loc[station].values
+    else:
+        dataX = data.apply(stripNA, axis = 0, cts=True).values
+    print('Predicting')
+    trainer.predict(dataX)        
+    l1predictions = trainer.l1Output
+    l2predictions = trainer.l2Output
+    print('Done')
+    return(l1predictions, l2predictions)
